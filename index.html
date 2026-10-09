@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f6eee6">
+  <title>恋爱综艺八人来信小卡制作器</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="paper-noise" aria-hidden="true"></div>
+  <header class="site-header">
+    <div class="brand-wrap">
+      <img src="assets/logo.png" class="brand-logo" alt="恋爱综艺来信小卡标志">
+      <div>
+        <p class="eyebrow">LOVE LETTER STUDIO</p>
+        <h1>恋爱综艺八人来信<br>小卡制作器</h1>
+        <p class="subtitle">从角色、来信到可收藏的独立小卡，一路向下完成。</p>
+      </div>
+    </div>
+    <div class="status-ribbon"><span id="activeRoundLabel">第1轮</span><span class="dot"></span><span id="globalSaveStatus">本机数据已就绪</span></div>
+  </header>
+
+  <nav class="step-nav" aria-label="主要功能">
+    <button class="nav-btn active" data-page="overview"><b>01</b><span>总览</span></button>
+    <button class="nav-btn" data-page="characters"><b>02</b><span>角色</span></button>
+    <button class="nav-btn" data-page="letters"><b>03</b><span>来信</span></button>
+    <button class="nav-btn" data-page="preview"><b>04</b><span>预览</span></button>
+    <button class="nav-btn" data-page="export"><b>05</b><span>导出</span></button>
+  </nav>
+
+  <main class="app-shell">
+    <section id="page-overview" class="page active-page">
+      <div class="section-intro">
+        <span class="section-number">01</span>
+        <div><p class="eyebrow">PROJECT OVERVIEW</p><h2>今天，也把心意写下来</h2><p>数据只保存在当前浏览器。先整理角色，再依轮次编辑来信。</p></div>
+      </div>
+      <div class="metrics">
+        <article><span>启用角色</span><strong id="metricCharacters">8</strong><small>位嘉宾</small></article>
+        <article><span>来信轮次</span><strong id="metricRounds">5</strong><small>个章节</small></article>
+        <article><span>本轮进度</span><strong id="metricProgress">0/8</strong><small>封完成</small></article>
+      </div>
+      <div class="current-round-card">
+        <div><p class="eyebrow">CURRENT ROUND</p><h3 id="overviewRoundName">第1轮</h3><p id="overviewRoundHint">还有 8 封来信等待填写</p></div>
+        <button class="primary-btn" data-go="letters">继续编辑来信 <span>→</span></button>
+      </div>
+      <div class="quick-actions">
+        <button data-go="characters"><span class="qa-icon">人</span><b>管理角色</b><small>姓名、立绘与代表色</small></button>
+        <button data-go="preview"><span class="qa-icon">卡</span><b>预览小卡</b><small>检查构图与完整文字</small></button>
+        <button data-go="export"><span class="qa-icon">出</span><b>前往导出</b><small>PNG、ZIP 与项目备份</small></button>
+      </div>
+      <aside class="privacy-note"><b>本机隐私说明</b><p>角色图片、来信与设置只存储在当前浏览器，不会上传到外部服务器。不同装置不会自动同步；清除网站数据可能造成资料遗失，建议定期导出项目备份。</p></aside>
+    </section>
+
+    <section id="page-characters" class="page">
+      <div class="section-intro"><span class="section-number">02</span><div><p class="eyebrow">CAST ARCHIVE</p><h2>角色与立绘管理</h2><p>稳定的角色 ID 会确保改名后，旧来信仍属于正确的人。</p></div></div>
+      <div class="toolbar"><div><b>角色列表</b><small id="characterCountText">8 位角色</small></div><button id="addCharacterBtn" class="secondary-btn">＋ 新增角色</button></div>
+      <div id="characterList" class="character-list"></div>
+    </section>
+
+    <section id="page-letters" class="page">
+      <div class="section-intro"><span class="section-number">03</span><div><p class="eyebrow">LETTER EDITOR</p><h2>按轮次写下每封来信</h2><p>每个可见字符计 1 字，空格与换行不计；5–30 字最合适。</p></div></div>
+      <div class="round-panel">
+        <label>当前轮次<select id="letterRoundSelect"></select></label>
+        <div class="round-actions"><button id="addRoundBtn" class="text-btn">＋ 新增</button><button id="renameRoundBtn" class="text-btn">重命名</button><button id="deleteRoundBtn" class="text-btn danger">删除</button></div>
+        <div class="progress-track"><span id="roundProgressBar"></span></div><small id="roundProgressText">已完成 0 / 8</small>
+      </div>
+      <div id="letterEditors" class="letter-editors"></div>
+    </section>
+
+    <section id="page-preview" class="page">
+      <div class="section-intro"><span class="section-number">04</span><div><p class="eyebrow">CARD PREVIEW</p><h2>预览每一份心意</h2><p>预览与 PNG 使用同一套 Canvas 绘制逻辑。</p></div></div>
+      <div class="preview-controls">
+        <label>轮次<select id="previewRoundSelect"></select></label>
+        <label>角色<select id="previewCharacterSelect"></select></label>
+      </div>
+      <div class="card-stage"><canvas id="cardCanvas" width="1200" height="1600" aria-label="当前小卡预览"></canvas></div>
+      <div id="layoutWarning" class="inline-warning hidden"></div>
+      <div class="preview-actions"><button id="downloadCurrentBtn" class="primary-btn">下载这张 PNG</button><button id="showAllBtn" class="secondary-btn">查看本轮全部小卡</button></div>
+
+      <details class="style-studio" open><summary><span>外观设置</span><small>即时更新</small></summary>
+        <div class="preset-row"><button data-preset="cream" class="preset active">奶油粉色恋爱风</button><button data-preset="blue" class="preset">雾蓝色清新风</button><button data-preset="lavender" class="preset">淡紫色浪漫风</button></div>
+        <div class="settings-grid">
+          <label>小卡主色<input id="settingPrimary" type="color"></label>
+          <label>信纸背景<input id="settingPaper" type="color"></label>
+          <label>文字颜色<input id="settingText" type="color"></label>
+          <label>装饰风格<select id="settingDecor"><option value="stars">星光邮简</option><option value="ribbon">轻柔缎带</option><option value="minimal">极简印章</option></select></label>
+          <label>字体大小 <output id="fontSizeOut"></output><input id="settingFontSize" type="range" min="38" max="64" step="1"></label>
+          <label>人物区比例 <output id="imageRatioOut"></output><input id="settingImageRatio" type="range" min="42" max="58" step="1"></label>
+          <label>信纸区比例 <output id="letterRatioOut"></output><input id="settingLetterRatio" type="range" min="22" max="34" step="1"></label>
+        </div>
+      </details>
+      <div id="allCardsSection" class="all-cards hidden"><div class="subhead"><h3>本轮全部小卡</h3><button id="hideAllBtn" class="text-btn">收起</button></div><div id="allCardsList"></div></div>
+    </section>
+
+    <section id="page-export" class="page">
+      <div class="section-intro"><span class="section-number">05</span><div><p class="eyebrow">EXPORT DESK</p><h2>把来信带离屏幕</h2><p>每封非空白来信生成一张 1200 × 1600 PNG。</p></div></div>
+      <article class="export-card"><div class="export-icon">PNG</div><div><h3>当前预览小卡</h3><p id="singleExportInfo">选择一位角色后下载独立图片。</p></div><button id="downloadCurrentBtn2" class="secondary-btn">下载 PNG</button></article>
+      <article class="export-card vertical"><div class="export-heading"><div class="export-icon">ZIP</div><div><h3>批量导出小卡</h3><p>空白来信自动跳过，每张图片保持独立。</p></div></div>
+        <fieldset id="exportScope"><legend>选择导出范围</legend><label><input type="radio" name="scope" value="current" checked> 当前轮次</label><label><input type="radio" name="scope" value="selected"> 指定轮次</label><label><input type="radio" name="scope" value="all"> 全部轮次</label></fieldset>
+        <div id="roundCheckboxes" class="round-checkboxes hidden"></div>
+        <div class="export-count"><span>预计导出</span><strong id="exportCount">0</strong><span>张图片</span></div>
+        <button id="batchExportBtn" class="primary-btn full">生成并下载 ZIP</button>
+        <div id="exportProgress" class="export-progress hidden"><div><span id="exportProgressText">正在准备图片</span><b id="exportProgressCount">0 / 0</b></div><div class="progress-track"><span id="exportProgressBar"></span></div></div>
+      </article>
+      <article class="backup-card"><div><p class="eyebrow">LOCAL BACKUP</p><h3>项目备份与还原</h3><p>备份包含角色、立绘、轮次、来信与外观设置。</p></div><div class="backup-actions"><button id="backupExportBtn" class="secondary-btn">导出项目备份</button><label class="secondary-btn file-btn">选择备份文件<input id="backupImportInput" type="file" accept="application/json,.json"></label></div><div id="backupPreview" class="backup-preview hidden"></div></article>
+      <details class="deploy-help"><summary>GitHub Pages 部署说明</summary><ol><li>将全部文件上传到仓库根目录。</li><li>打开仓库 Settings → Pages。</li><li>在 Build and deployment 中选择 Deploy from a branch。</li><li>选择 main 分支与 /(root)，保存后等待发布。</li><li>打开发布页面，新增一封测试来信并刷新，确认 IndexedDB 可正常保存。</li></ol></details>
+    </section>
+  </main>
+
+  <dialog id="characterDialog" class="app-dialog"><form method="dialog" id="characterForm"><div class="dialog-head"><div><p class="eyebrow">CAST PROFILE</p><h2 id="characterDialogTitle">编辑角色</h2></div><button value="cancel" class="icon-btn" aria-label="关闭">×</button></div><input id="characterId" type="hidden"><div class="form-grid"><label>角色名称<input id="characterName" maxlength="20" required></label><label>代号或昵称<input id="characterAlias" maxlength="20"></label><label>性别<select id="characterGender"><option value="male">男</option><option value="female">女</option><option value="other">其他</option></select></label><label>代表色<input id="characterColor" type="color" value="#d89ca7"></label><label class="toggle-label">是否启用<input id="characterEnabled" type="checkbox" checked><span class="toggle"></span></label></div><div class="dialog-actions"><button value="cancel" class="secondary-btn">取消</button><button id="saveCharacterBtn" value="default" class="primary-btn">保存角色</button></div></form></dialog>
+  <dialog id="confirmDialog" class="app-dialog small"><form method="dialog"><h2 id="confirmTitle">请确认</h2><p id="confirmMessage"></p><div class="dialog-actions"><button value="cancel" class="secondary-btn">取消</button><button value="confirm" id="confirmOk" class="primary-btn">确认</button></div></form></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <input id="hiddenImageInput" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+  <script src="app.js"></script>
+</body>
+</html>
