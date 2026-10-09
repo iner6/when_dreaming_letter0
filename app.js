@@ -88,8 +88,6 @@ function goPage(name){
 function renderRoundOptions(){
   const html=state.rounds.map(r=>`<option value="${r.id}">${escapeHTML(r.name)}</option>`).join('');
   $('#letterRoundSelect').innerHTML=html;$('#letterRoundSelect').value=state.activeRoundId;
-  $('#previewRoundSelect').innerHTML=html;$('#previewRoundSelect').value=state.previewRoundId;
-  $('#roundCheckboxes').innerHTML=state.rounds.map(r=>`<label><input type="checkbox" value="${r.id}" checked> ${escapeHTML(r.name)}</label>`).join('');
 }
 function escapeHTML(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
 function renderOverview(){
@@ -121,7 +119,7 @@ function renderCharacterSelect(){
   const chars=enabledCharacters();if(!chars.some(c=>c.id===state.previewCharacterId))state.previewCharacterId=chars[0]?.id||state.characters[0]?.id||'';
   $('#previewCharacterSelect').innerHTML=chars.map(c=>`<option value="${c.id}">${escapeHTML(c.name)}</option>`).join('');$('#previewCharacterSelect').value=state.previewCharacterId;
 }
-function renderSettings(){const s=state.settings;$('#settingPrimary').value=s.primary;$('#settingPaper').value=s.paper;$('#settingText').value=s.text;$('#settingDecor').value=s.decor;$('#settingFontSize').value=s.fontSize;$('#settingImageRatio').value=s.imageRatio;$('#settingLetterRatio').value=s.letterRatio;$('#fontSizeOut').textContent=`${s.fontSize}px`;$('#imageRatioOut').textContent=`${s.imageRatio}%`;$('#letterRatioOut').textContent=`${s.letterRatio}%`;$$('.preset').forEach(b=>b.classList.toggle('active',b.dataset.preset===s.preset))}
+function renderSettings(){const s=state.settings;$('#settingPrimary').value=s.primary;$('#settingPaper').value=s.paper;$('#settingText').value=s.text;$('#settingDecor').value=s.decor;$('#settingFontSize').value=s.fontSize;$('#fontSizeOut').textContent=`${s.fontSize}px`;$$('.preset').forEach(b=>b.classList.toggle('active',b.dataset.preset===s.preset))}
 function renderAll(){renderRoundOptions();renderOverview();renderCharacters();renderLetterEditors();renderCharacterSelect();renderSettings();updateExportUI()}
 
 function openCharacterDialog(c=null){
@@ -146,62 +144,72 @@ function drawContain(ctx,img,x,y,w,h,pad=0){if(!img)return;const scale=Math.min(
 function splitLines(ctx,text,maxWidth){
   const result=[];let line='';for(const ch of Array.from(text.replace(/\n+/g,' '))){const test=line+ch;if(ctx.measureText(test).width>maxWidth&&line){result.push(line.trimEnd());line=ch.trimStart()}else line=test}if(line||!result.length)result.push(line.trimEnd());return result;
 }
-async function renderCard(canvas,round,character,letter,settings=state.settings){
-  const ctx=canvas.getContext('2d');canvas.width=1200;canvas.height=1600;const s=settings;
-  ctx.clearRect(0,0,1200,1600);ctx.fillStyle='#f7f1e8';ctx.fillRect(0,0,1200,1600);
-  const glow=ctx.createRadialGradient(950,170,20,950,170,700);glow.addColorStop(0,hexAlpha(s.primary,.48));glow.addColorStop(1,hexAlpha(s.primary,0));ctx.fillStyle=glow;ctx.fillRect(0,0,1200,900);
-  ctx.strokeStyle=hexAlpha(s.primary,.52);ctx.lineWidth=3;roundedRect(ctx,44,44,1112,1512,32);ctx.stroke();ctx.strokeStyle='rgba(255,255,255,.72)';ctx.lineWidth=2;roundedRect(ctx,56,56,1088,1488,26);ctx.stroke();
-  for(let y=85;y<1540;y+=18){ctx.fillStyle=`rgba(100,78,72,${y%36?'.017':'.01'})`;ctx.fillRect(70,y,1060,1)}
-  let logo=null,portrait=null;try{[logo,portrait]=await Promise.all([loadImage('assets/logo.png'),loadImage(character?.image)])}catch(e){console.warn(e)}
-  if(logo)drawContain(ctx,logo,74,70,285,92);else{ctx.fillStyle=s.text;ctx.font='36px serif';ctx.fillText('LOVE LETTER',80,122)}
-  ctx.save();ctx.translate(1042,104);ctx.rotate(.06);ctx.strokeStyle=hexAlpha(s.primary,.9);ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,58,0,Math.PI*2);ctx.stroke();ctx.font='bold 20px Georgia';ctx.textAlign='center';ctx.fillStyle=hexAlpha(s.text,.72);ctx.fillText('LOVE',0,-6);ctx.font='15px serif';ctx.fillText('LETTER',0,18);ctx.restore();
-  ctx.fillStyle=s.primary;roundedRect(ctx,76,180,210,54,27);ctx.fill();ctx.fillStyle='#fff';ctx.font='600 25px "Noto Serif SC",serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(round?.name||'未命名轮次',181,207);
-  ctx.fillStyle=hexAlpha(s.text,.64);ctx.font='17px Georgia';ctx.letterSpacing='3px';ctx.textAlign='right';ctx.fillText('A LETTER JUST FOR YOU',1110,207);ctx.letterSpacing='0px';
-  const letterH=Math.round(1600*s.letterRatio/100),paperY=1480-letterH,nameY=paperY-60,imgY=255,imgH=Math.min(Math.round(1600*s.imageRatio/100),nameY-imgY-52);
-  ctx.fillStyle='rgba(255,255,255,.38)';roundedRect(ctx,76,imgY,1048,imgH,28);ctx.fill();ctx.strokeStyle=hexAlpha(s.primary,.3);ctx.lineWidth=2;roundedRect(ctx,76,imgY,1048,imgH,28);ctx.stroke();
-  if(portrait)drawContain(ctx,portrait,96,imgY+18,1008,imgH-36,0);else{
-    ctx.fillStyle=hexAlpha(s.primary,.12);roundedRect(ctx,96,imgY+18,1008,imgH-36,20);ctx.fill();ctx.fillStyle=hexAlpha(s.text,.46);ctx.font='30px "Noto Serif SC",serif';ctx.textAlign='center';ctx.fillText('尚未上传角色立绘',600,imgY+imgH/2);
-  }
-  ctx.fillStyle=s.text;ctx.font='600 47px "Noto Serif SC",serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText(character?.name||'未选择角色',600,nameY);
-  ctx.save();ctx.shadowColor='rgba(64,43,40,.13)';ctx.shadowBlur=24;ctx.shadowOffsetY=12;ctx.fillStyle=s.paper;roundedRect(ctx,105,paperY,990,letterH,24);ctx.fill();ctx.restore();
-  ctx.strokeStyle=hexAlpha(s.primary,.43);ctx.lineWidth=2;roundedRect(ctx,105,paperY,990,letterH,24);ctx.stroke();
-  ctx.fillStyle=s.primary;ctx.beginPath();ctx.arc(145,paperY+41,7,0,Math.PI*2);ctx.fill();ctx.fillStyle=hexAlpha(s.text,.45);ctx.font='15px Georgia';ctx.textAlign='left';ctx.fillText('DEAR,',165,paperY+47);
-  if(s.decor==='stars'){ctx.fillStyle=hexAlpha(s.primary,.75);ctx.font='28px serif';ctx.fillText('✦',1024,paperY+48);ctx.fillText('·',1055,paperY+49)}
-  else if(s.decor==='ribbon'){ctx.strokeStyle=hexAlpha(s.primary,.75);ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(975,paperY+32);ctx.bezierCurveTo(1010,paperY+12,1040,paperY+70,1070,paperY+35);ctx.stroke()}
-  else{ctx.strokeStyle=hexAlpha(s.primary,.7);ctx.lineWidth=2;ctx.strokeRect(1010,paperY+22,55,42)}
-  const clean=String(letter||'').trim(),maxTextWidth=830,minFontSize=24,textTop=paperY+76,textBottom=paperY+letterH-42,availableTextHeight=Math.max(100,textBottom-textTop);let fontSize=Number(s.fontSize),lines=[],lineHeight=0,totalH=0;
-  do{ctx.font=`600 ${fontSize}px "Noto Serif SC","Songti SC",serif`;lines=splitLines(ctx,clean||'这封来信还没有内容',maxTextWidth);lineHeight=fontSize*1.45;totalH=lines.length*lineHeight;if(totalH<=availableTextHeight)break;fontSize--}while(fontSize>minFontSize);
-  const centerY=(textTop+textBottom)/2;ctx.fillStyle=clean?s.text:hexAlpha(s.text,.35);ctx.textAlign='center';ctx.textBaseline='middle';
-  lines.forEach((line,i)=>ctx.fillText(line,600,centerY-totalH/2+lineHeight*(i+.5)));
-  ctx.fillStyle=hexAlpha(s.text,.52);ctx.font='14px Georgia';ctx.textAlign='center';ctx.fillText('THE MOMENT WE MET · LOVE LETTER ARCHIVE',600,1525);
-  const overflow=totalH>availableTextHeight;return {overflow,fontSize,lines:lines.length,missingImage:!portrait};
+function journeyEntries(character){
+  return state.rounds.map(round=>({round,text:getLetter(round.id,character.id).trim()})).filter(item=>countChars(item.text));
+}
+async function renderJourneyCard(canvas,character,settings=state.settings){
+  const s=settings,entries=journeyEntries(character),fontSize=Number(s.fontSize),lineHeight=Math.round(fontSize*1.55),maxTextWidth=830;
+  canvas.width=1200;canvas.height=100;let ctx=canvas.getContext('2d');ctx.font=`600 ${fontSize}px "Noto Serif SC","Songti SC",serif`;
+  const sections=entries.map(item=>{const lines=splitLines(ctx,item.text,maxTextWidth);return {...item,lines,height:150+lines.length*lineHeight}});
+  const headerH=690,footerH=170,emptyH=330,gap=34;
+  const contentH=sections.length?sections.reduce((n,x)=>n+x.height,0)+gap*Math.max(0,sections.length-1):emptyH;
+  const totalH=Math.max(1320,headerH+contentH+footerH);
+  canvas.width=1200;canvas.height=totalH;ctx=canvas.getContext('2d');
+  ctx.fillStyle='#f7f1e8';ctx.fillRect(0,0,1200,totalH);
+  const glow=ctx.createRadialGradient(950,180,30,950,180,820);glow.addColorStop(0,hexAlpha(s.primary,.48));glow.addColorStop(1,hexAlpha(s.primary,0));ctx.fillStyle=glow;ctx.fillRect(0,0,1200,980);
+  for(let y=85;y<totalH-60;y+=18){ctx.fillStyle=`rgba(100,78,72,${y%36?'.017':'.01'})`;ctx.fillRect(70,y,1060,1)}
+  ctx.strokeStyle=hexAlpha(s.primary,.52);ctx.lineWidth=3;roundedRect(ctx,44,44,1112,totalH-88,32);ctx.stroke();ctx.strokeStyle='rgba(255,255,255,.72)';ctx.lineWidth=2;roundedRect(ctx,56,56,1088,totalH-112,26);ctx.stroke();
+  let portrait=null;try{portrait=await loadImage(character?.image)}catch(e){console.warn(e)}
+  ctx.fillStyle=hexAlpha(s.text,.78);ctx.font='18px Georgia';ctx.textAlign='left';ctx.fillText('LOVE LETTER · COMPLETE JOURNEY',82,105);
+  ctx.save();ctx.translate(1040,112);ctx.rotate(.06);ctx.strokeStyle=hexAlpha(s.primary,.9);ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,59,0,Math.PI*2);ctx.stroke();ctx.font='bold 18px Georgia';ctx.textAlign='center';ctx.fillStyle=hexAlpha(s.text,.72);ctx.fillText('ALL',0,-7);ctx.font='14px Georgia';ctx.fillText('STAGES',0,17);ctx.restore();
+  ctx.fillStyle='rgba(255,255,255,.43)';roundedRect(ctx,76,150,1048,370,30);ctx.fill();ctx.strokeStyle=hexAlpha(s.primary,.3);ctx.lineWidth=2;roundedRect(ctx,76,150,1048,370,30);ctx.stroke();
+  if(portrait)drawContain(ctx,portrait,96,168,1008,334);else{ctx.fillStyle=hexAlpha(s.primary,.12);roundedRect(ctx,96,168,1008,334,22);ctx.fill();ctx.fillStyle=hexAlpha(s.text,.42);ctx.font='28px "Noto Serif SC",serif';ctx.textAlign='center';ctx.fillText('尚未上传角色立绘',600,345)}
+  ctx.fillStyle=s.text;ctx.font='600 58px "Noto Serif SC",serif';ctx.textAlign='center';ctx.fillText(character?.name||'未选择角色',600,590);
+  ctx.fillStyle=hexAlpha(s.text,.55);ctx.font='17px Georgia';ctx.fillText(`${sections.length} / ${state.rounds.length} STAGES ARCHIVED`,600,628);
+  let y=headerH;
+  if(!sections.length){ctx.fillStyle=s.paper;roundedRect(ctx,105,y,990,emptyH-24,28);ctx.fill();ctx.strokeStyle=hexAlpha(s.primary,.38);ctx.lineWidth=2;ctx.stroke();ctx.fillStyle=hexAlpha(s.text,.38);ctx.font='30px "Noto Serif SC",serif';ctx.textAlign='center';ctx.fillText('还没有已填写的阶段来信',600,y+145)}
+  sections.forEach((section,index)=>{
+    ctx.save();ctx.shadowColor='rgba(64,43,40,.12)';ctx.shadowBlur=22;ctx.shadowOffsetY=10;ctx.fillStyle=s.paper;roundedRect(ctx,105,y,990,section.height,28);ctx.fill();ctx.restore();
+    ctx.strokeStyle=hexAlpha(s.primary,.43);ctx.lineWidth=2;roundedRect(ctx,105,y,990,section.height,28);ctx.stroke();
+    ctx.fillStyle=s.primary;roundedRect(ctx,137,y+30,190,48,24);ctx.fill();ctx.fillStyle='#fff';ctx.font='600 22px "Noto Serif SC",serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(section.round.name,232,y+54);
+    ctx.fillStyle=hexAlpha(s.text,.34);ctx.font='15px Georgia';ctx.textAlign='right';ctx.fillText(String(index+1).padStart(2,'0')+'  /  '+String(sections.length).padStart(2,'0'),1055,y+58);
+    if(s.decor==='stars'){ctx.fillStyle=hexAlpha(s.primary,.7);ctx.font='25px serif';ctx.fillText('✦  ·',1010,y+101)}
+    else if(s.decor==='ribbon'){ctx.strokeStyle=hexAlpha(s.primary,.68);ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(956,y+96);ctx.bezierCurveTo(992,y+75,1020,y+122,1056,y+92);ctx.stroke()}
+    else{ctx.strokeStyle=hexAlpha(s.primary,.65);ctx.lineWidth=2;ctx.strokeRect(1008,y+84,44,34)}
+    ctx.font=`600 ${fontSize}px "Noto Serif SC","Songti SC",serif`;ctx.fillStyle=s.text;ctx.textAlign='center';ctx.textBaseline='middle';
+    const textTop=y+112;section.lines.forEach((line,i)=>ctx.fillText(line,600,textTop+lineHeight*(i+.5)));
+    y+=section.height+gap;
+  });
+  ctx.fillStyle=hexAlpha(s.text,.5);ctx.font='14px Georgia';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText('EVERY CHAPTER · EVERY LETTER · ONE COMPLETE STORY',600,totalH-88);
+  return {height:totalH,missingImage:!portrait,entryCount:sections.length,totalRounds:state.rounds.length};
 }
 async function renderPreview(){
-  const round=getRound(state.previewRoundId),character=getCharacter(state.previewCharacterId);if(!round||!character)return;
-  const result=await renderCard($('#cardCanvas'),round,character,getLetter(round.id,character.id));
-  const warnings=[];if(result.missingImage)warnings.push('当前角色尚未上传立绘，将以留白提示区输出。');if(result.overflow)warnings.push('文字无法完整容纳，请降低字体大小或增加信纸区比例。');
-  $('#layoutWarning').textContent=warnings.join(' ');$('#layoutWarning').classList.toggle('hidden',!warnings.length);$('#singleExportInfo').textContent=`${round.name} · ${character.name} · 1200 × 1600 px`;
+  const character=getCharacter(state.previewCharacterId);if(!character)return;
+  const result=await renderJourneyCard($('#cardCanvas'),character);
+  const warnings=[];if(result.missingImage)warnings.push('当前角色尚未上传立绘，将以留白提示区输出。');if(!result.entryCount)warnings.push('这个角色还没有已填写的来信，暂时无法下载。');
+  $('#layoutWarning').textContent=warnings.join(' ');$('#layoutWarning').classList.toggle('hidden',!warnings.length);
+  $('#previewRangeInfo').textContent=`已填写 ${result.entryCount} / ${result.totalRounds} 个阶段`;
+  $('#singleExportInfo').textContent=`${character.name} · ${result.entryCount} 个阶段 · 1200 × ${result.height} px`;
 }
 
 function canvasBlob(canvas){return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('浏览器无法生成 PNG 图片。')),'image/png'))}
 function downloadBlob(blob,name){const a=document.createElement('a');const url=URL.createObjectURL(blob);a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
 async function downloadCurrent(){
-  if(exporting)return;const round=getRound(state.previewRoundId),character=getCharacter(state.previewCharacterId);if(!round||!character)return showToast('请先选择轮次与角色。',true);const text=getLetter(round.id,character.id);if(!countChars(text))return showToast('当前来信为空白，请先填写内容。',true);if(countChars(text)<LETTER_MIN&&!await confirmAction(`来信少于 ${LETTER_MIN} 字`,`“${character.name}”的来信只有 ${countChars(text)} 字，仍要导出吗？`,'继续导出'))return;
-  try{exporting=true;await document.fonts?.ready;const canvas=document.createElement('canvas');const result=await renderCard(canvas,round,character,text);if(result.overflow)throw new Error('文字排版空间不足，请调整字体或信纸区比例。');downloadBlob(await canvasBlob(canvas),`${roundFileName(round)}_${sanitizeFileName(character.name)}.png`);showToast('PNG 已生成并开始下载');}
+  if(exporting)return;const character=getCharacter(state.previewCharacterId);if(!character)return showToast('请先选择角色。',true);const entries=journeyEntries(character);if(!entries.length)return showToast('这个角色还没有已填写的阶段来信。',true);const short=entries.filter(x=>countChars(x.text)<LETTER_MIN);if(short.length&&!await confirmAction(`有 ${short.length} 个阶段少于 ${LETTER_MIN} 字`,`仍要输出“${character.name}”的完整阶段长卡吗？`,'继续导出'))return;
+  try{exporting=true;await document.fonts?.ready;const canvas=document.createElement('canvas');await renderJourneyCard(canvas,character);downloadBlob(await canvasBlob(canvas),`全阶段_${sanitizeFileName(character.name)}.png`);showToast('完整阶段长图已生成并开始下载');}
   catch(e){showToast(`导出失败：${e.message}`,true)}finally{exporting=false}
 }
 async function renderAllCards(){
-  const box=$('#allCardsList');box.innerHTML='';const round=getRound(state.previewRoundId);for(const c of enabledCharacters()){
-    const text=getLetter(round.id,c.id),item=document.createElement('article');item.className='mini-card-item';
-    if(countChars(text)){const canvas=document.createElement('canvas');const info=document.createElement('div');info.className='mini-card-info';info.innerHTML=`<h4>${escapeHTML(c.name)}</h4><p>${escapeHTML(text)}</p><button class="secondary-btn">编辑或查看此卡</button>`;item.append(canvas,info);await renderCard(canvas,round,c,text);info.querySelector('button').onclick=()=>{state.previewCharacterId=c.id;$('#previewCharacterSelect').value=c.id;renderPreview();goPage('letters');setTimeout(()=>{const d=$(`.letter-editor[data-id="${CSS.escape(c.id)}"]`);if(d){d.open=true;d.scrollIntoView({behavior:'smooth'})}},150)};}
-    else item.innerHTML=`<div class="empty-mini">未填写来信</div><div class="mini-card-info"><h4>${escapeHTML(c.name)}</h4><p>空白信件不会参与批量导出。</p><button class="secondary-btn">前往填写</button></div>`,item.querySelector('button').onclick=()=>goPage('letters');
+  const box=$('#allCardsList');box.innerHTML='';for(const c of enabledCharacters()){
+    const entries=journeyEntries(c),item=document.createElement('article');item.className='mini-card-item';
+    if(entries.length){const canvas=document.createElement('canvas');const info=document.createElement('div');info.className='mini-card-info';info.innerHTML=`<h4>${escapeHTML(c.name)}</h4><p>已收录 ${entries.length} / ${state.rounds.length} 个阶段，全部整合在同一张长图。</p><button class="secondary-btn">设为当前预览</button>`;item.append(canvas,info);await renderJourneyCard(canvas,c);info.querySelector('button').onclick=()=>{state.previewCharacterId=c.id;$('#previewCharacterSelect').value=c.id;renderPreview();item.scrollIntoView({behavior:'smooth',block:'center'})};}
+    else item.innerHTML=`<div class="empty-mini">尚无阶段来信</div><div class="mini-card-info"><h4>${escapeHTML(c.name)}</h4><p>至少填写一个阶段后，才会参与批量导出。</p><button class="secondary-btn">前往填写</button></div>`,item.querySelector('button').onclick=()=>goPage('letters');
     box.append(item);await new Promise(r=>setTimeout(r,0));
   }
 }
-function exportRoundIds(){const scope=$('input[name="scope"]:checked')?.value||'current';if(scope==='current')return [state.activeRoundId];if(scope==='all')return state.rounds.map(r=>r.id);return $$('#roundCheckboxes input:checked').map(x=>x.value)}
-function exportItems(){const ids=new Set(exportRoundIds()),items=[];for(const r of state.rounds){if(!ids.has(r.id))continue;for(const c of state.characters){if(!c.enabled)continue;const text=getLetter(r.id,c.id);if(countChars(text))items.push({round:r,character:c,text})}}return items}
+function exportItems(){return enabledCharacters().map(character=>({character,entries:journeyEntries(character)})).filter(item=>item.entries.length)}
 function updateExportUI(){
-  const selected=$('input[name="scope"]:checked')?.value;$('#roundCheckboxes').classList.toggle('hidden',selected!=='selected');$('#exportCount').textContent=exportItems().length;
+  $('#exportCount').textContent=exportItems().length;
 }
 const crcTable=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?0xedb88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
 function crc32(bytes){let c=0xffffffff;for(const b of bytes)c=crcTable[(c^b)&255]^(c>>>8);return (c^0xffffffff)>>>0}
@@ -214,10 +222,10 @@ async function makeZip(files){
   const centralBlock=concatBytes(centrals),end=concatBytes([u32(0x06054b50),u16(0),u16(0),u16(files.length),u16(files.length),u32(centralBlock.length),u32(offset),u16(0)]);return new Blob([...locals,centralBlock,end],{type:'application/zip'})
 }
 async function batchExport(){
-  if(exporting)return;const items=exportItems();if(!items.length)return showToast('没有可导出的非空白来信。',true);const short=items.filter(x=>countChars(x.text)<LETTER_MIN);if(short.length&&!await confirmAction('发现短来信',`有 ${short.length} 封来信少于 ${LETTER_MIN} 字。仍要继续批量导出吗？`,'继续导出'))return;
+  if(exporting)return;const items=exportItems();if(!items.length)return showToast('没有可导出的非空白来信。',true);const short=items.flatMap(x=>x.entries).filter(x=>countChars(x.text)<LETTER_MIN);if(short.length&&!await confirmAction('发现短来信',`有 ${short.length} 个阶段少于 ${LETTER_MIN} 字。仍要继续批量导出吗？`,'继续导出'))return;
   const progress=$('#exportProgress');progress.classList.remove('hidden');$('#exportProgressBar').style.width='0%';const files=[],failures=[];exporting=true;$('#batchExportBtn').disabled=true;
-  try{await document.fonts?.ready;for(let i=0;i<items.length;i++){const item=items[i];$('#exportProgressText').textContent=`正在产生小卡：${i+1} / ${items.length}`;$('#exportProgressCount').textContent=`${i} / ${items.length}`;try{const canvas=document.createElement('canvas');const layout=await renderCard(canvas,item.round,item.character,item.text);if(layout.overflow)throw new Error('文字无法容纳');files.push({name:`${roundFileName(item.round)}_${sanitizeFileName(item.character.name)}.png`,blob:await canvasBlob(canvas)})}catch(e){failures.push(`${item.round.name}／${item.character.name}：${e.message}`)}$('#exportProgressCount').textContent=`${i+1} / ${items.length}`;$('#exportProgressBar').style.width=`${(i+1)/items.length*100}%`;await new Promise(r=>setTimeout(r,25))}
-    if(!files.length)throw new Error('所有小卡均生成失败。');$('#exportProgressText').textContent='正在封装 ZIP…';downloadBlob(await makeZip(files),'恋爱综艺来信小卡.zip');if(failures.length)showToast(`已导出 ${files.length} 张，${failures.length} 张失败：${failures.join('；')}`,true);else showToast(`已成功生成 ${files.length} 张小卡`);$('#exportProgressText').textContent=failures.length?'导出完成，部分失败':'导出成功';
+  try{await document.fonts?.ready;for(let i=0;i<items.length;i++){const item=items[i];$('#exportProgressText').textContent=`正在产生完整长卡：${i+1} / ${items.length}`;$('#exportProgressCount').textContent=`${i} / ${items.length}`;try{const canvas=document.createElement('canvas');await renderJourneyCard(canvas,item.character);files.push({name:`全阶段_${sanitizeFileName(item.character.name)}.png`,blob:await canvasBlob(canvas)})}catch(e){failures.push(`${item.character.name}：${e.message}`)}$('#exportProgressCount').textContent=`${i+1} / ${items.length}`;$('#exportProgressBar').style.width=`${(i+1)/items.length*100}%`;await new Promise(r=>setTimeout(r,25))}
+    if(!files.length)throw new Error('所有角色长卡均生成失败。');$('#exportProgressText').textContent='正在封装 ZIP…';downloadBlob(await makeZip(files),'恋爱综艺_全阶段角色长卡.zip');if(failures.length)showToast(`已导出 ${files.length} 张，${failures.length} 张失败：${failures.join('；')}`,true);else showToast(`已成功生成 ${files.length} 张角色长卡`);$('#exportProgressText').textContent=failures.length?'导出完成，部分失败':'导出成功';
   }catch(e){$('#exportProgressText').textContent='导出失败';showToast(`ZIP 导出失败：${e.message}`,true)}finally{exporting=false;$('#batchExportBtn').disabled=false}
 }
 
@@ -235,7 +243,6 @@ function bindEvents(){
   $$('.nav-btn').forEach(b=>b.onclick=()=>goPage(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>goPage(b.dataset.go));
   $('#letterEditors').addEventListener('toggle',e=>{if(e.target.matches('.letter-editor[open]'))requestAnimationFrame(()=>autoResizeTextarea($('.letter-textarea',e.target)))},true);
   $('#letterRoundSelect').onchange=e=>{state.activeRoundId=e.target.value;renderLetterEditors();renderOverview();scheduleSave()};
-  $('#previewRoundSelect').onchange=e=>{state.previewRoundId=e.target.value;renderPreview();scheduleSave()};
   $('#previewCharacterSelect').onchange=e=>{state.previewCharacterId=e.target.value;renderPreview();scheduleSave()};
   $('#addRoundBtn').onclick=async()=>{const name=prompt('请输入新轮次名称：',`第${state.rounds.length+1}轮`);if(!name?.trim())return;const r={id:uid('round'),name:name.trim().slice(0,30)};state.rounds.push(r);state.activeRoundId=r.id;state.previewRoundId=r.id;renderAll();scheduleSave();showToast('已新增空白轮次')};
   $('#renameRoundBtn').onclick=()=>{const r=getRound(state.activeRoundId),name=prompt('修改轮次名称：',r.name);if(!name?.trim())return;r.name=name.trim().slice(0,30);renderAll();renderPreview();scheduleSave()};
@@ -249,8 +256,8 @@ function bindEvents(){
   $('#downloadCurrentBtn').onclick=downloadCurrent;$('#downloadCurrentBtn2').onclick=downloadCurrent;
   $('#showAllBtn').onclick=async()=>{$('#allCardsSection').classList.remove('hidden');$('#showAllBtn').disabled=true;try{await renderAllCards();$('#allCardsSection').scrollIntoView({behavior:'smooth'})}finally{$('#showAllBtn').disabled=false}};$('#hideAllBtn').onclick=()=>$('#allCardsSection').classList.add('hidden');
   $$('.preset').forEach(b=>b.onclick=()=>{state.settings={...presets[b.dataset.preset],preset:b.dataset.preset};renderSettings();renderPreview();scheduleSave()});
-  ['settingPrimary','settingPaper','settingText','settingDecor','settingFontSize','settingImageRatio','settingLetterRatio'].forEach(id=>{$(`#${id}`).oninput=e=>{const map={settingPrimary:'primary',settingPaper:'paper',settingText:'text',settingDecor:'decor',settingFontSize:'fontSize',settingImageRatio:'imageRatio',settingLetterRatio:'letterRatio'},key=map[id];state.settings[key]=e.target.type==='range'?Number(e.target.value):e.target.value;state.settings.preset='custom';renderSettings();renderPreview();scheduleSave()}});
-  $('#exportScope').onchange=updateExportUI;$('#roundCheckboxes').onchange=updateExportUI;$('#batchExportBtn').onclick=batchExport;$('#backupExportBtn').onclick=exportBackup;$('#backupImportInput').onchange=e=>e.target.files[0]&&previewBackup(e.target.files[0]);
+  ['settingPrimary','settingPaper','settingText','settingDecor','settingFontSize'].forEach(id=>{$(`#${id}`).oninput=e=>{const map={settingPrimary:'primary',settingPaper:'paper',settingText:'text',settingDecor:'decor',settingFontSize:'fontSize'},key=map[id];state.settings[key]=e.target.type==='range'?Number(e.target.value):e.target.value;state.settings.preset='custom';renderSettings();renderPreview();scheduleSave()}});
+  $('#batchExportBtn').onclick=batchExport;$('#backupExportBtn').onclick=exportBackup;$('#backupImportInput').onchange=e=>e.target.files[0]&&previewBackup(e.target.files[0]);
   addEventListener('beforeunload',()=>{if(saveTimer)persistNow()});
 }
 
