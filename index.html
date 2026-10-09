@@ -59,7 +59,7 @@
     </section>
 
     <section id="page-letters" class="page">
-      <div class="section-intro"><span class="section-number">03</span><div><p class="eyebrow">LETTER EDITOR</p><h2>按轮次写下每封来信</h2><p>每个可见字符计 1 字，空格与换行不计；5–100 字最合适。</p></div></div>
+      <div class="section-intro"><span class="section-number">03</span><div><p class="eyebrow">LETTER EDITOR</p><h2>按轮次写下每封来信</h2><p>每个可见字符计 1 字，空格与换行不计；每封最多 100 字。</p></div></div>
       <div class="round-panel">
         <label>当前轮次<select id="letterRoundSelect"></select></label>
         <div class="round-actions"><button id="addRoundBtn" class="text-btn">＋ 新增</button><button id="renameRoundBtn" class="text-btn">重命名</button><button id="deleteRoundBtn" class="text-btn danger">删除</button></div>
@@ -108,7 +108,7 @@
     </section>
   </main>
 
-  <dialog id="characterDialog" class="app-dialog"><form method="dialog" id="characterForm"><div class="dialog-head"><div><p class="eyebrow">CAST PROFILE</p><h2 id="characterDialogTitle">编辑角色</h2></div><button value="cancel" class="icon-btn" aria-label="关闭">×</button></div><input id="characterId" type="hidden"><div class="form-grid"><label>角色名称<input id="characterName" maxlength="20" required></label><label>代号或昵称<input id="characterAlias" maxlength="20"></label><label>性别<select id="characterGender"><option value="male">男</option><option value="female">女</option><option value="other">其他</option></select></label><label>代表色<input id="characterColor" type="color" value="#d89ca7"></label><label class="toggle-label">是否启用<input id="characterEnabled" type="checkbox" checked><span class="toggle"></span></label></div><div class="dialog-actions"><button value="cancel" class="secondary-btn">取消</button><button id="saveCharacterBtn" value="default" class="primary-btn">保存角色</button></div></form></dialog>
+  <dialog id="characterDialog" class="app-dialog"><form method="dialog" id="characterForm"><div class="dialog-head"><div><p class="eyebrow">CAST PROFILE</p><h2 id="characterDialogTitle">编辑角色</h2></div><button value="cancel" class="icon-btn" aria-label="关闭">×</button></div><input id="characterId" type="hidden"><div class="form-grid"><label>角色名称<input id="characterName" maxlength="20" required></label><label>性别<select id="characterGender"><option value="male">男</option><option value="female">女</option><option value="other">其他</option></select></label><label>代表色<input id="characterColor" type="color" value="#d89ca7"></label><label class="toggle-label">是否启用<input id="characterEnabled" type="checkbox" checked><span class="toggle"></span></label></div><div class="dialog-actions"><button value="cancel" class="secondary-btn">取消</button><button id="saveCharacterBtn" value="default" class="primary-btn">保存角色</button></div></form></dialog>
   <dialog id="confirmDialog" class="app-dialog small"><form method="dialog"><h2 id="confirmTitle">请确认</h2><p id="confirmMessage"></p><div class="dialog-actions"><button value="cancel" class="secondary-btn">取消</button><button value="confirm" id="confirmOk" class="primary-btn">确认</button></div></form></dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <input id="hiddenImageInput" type="file" accept="image/png,image/jpeg,image/webp" hidden>

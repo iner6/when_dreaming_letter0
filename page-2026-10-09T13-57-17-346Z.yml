@@ -1,0 +1,118 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - img "恋爱综艺来信小卡标志" [ref=e4]
+      - generic [ref=e5]:
+        - paragraph [ref=e6]: LOVE LETTER STUDIO
+        - heading "恋爱综艺八人来信 小卡制作器" [level=1] [ref=e7]:
+          - text: 恋爱综艺八人来信
+          - text: 小卡制作器
+        - paragraph [ref=e8]: 从角色、来信到可收藏的独立小卡，一路向下完成。
+    - generic [ref=e9]:
+      - text: 第1轮
+      - text: 已保存到本机
+  - navigation "主要功能" [ref=e11]:
+    - button "01 总览" [ref=e12] [cursor=pointer]:
+      - generic [ref=e13]: "01"
+      - generic [ref=e14]: 总览
+    - button "02 角色" [ref=e15] [cursor=pointer]:
+      - generic [ref=e16]: "02"
+      - generic [ref=e17]: 角色
+    - button "03 来信" [active] [ref=e18] [cursor=pointer]:
+      - generic [ref=e19]: "03"
+      - generic [ref=e20]: 来信
+    - button "04 预览" [ref=e21] [cursor=pointer]:
+      - generic [ref=e22]: "04"
+      - generic [ref=e23]: 预览
+    - button "05 导出" [ref=e24] [cursor=pointer]:
+      - generic [ref=e25]: "05"
+      - generic [ref=e26]: 导出
+  - main [ref=e27]:
+    - text: ♡
+    - generic [ref=e66]:
+      - generic [ref=e67]:
+        - generic [ref=e68]: "03"
+        - generic [ref=e69]:
+          - paragraph [ref=e70]: LETTER EDITOR
+          - heading "按轮次写下每封来信" [level=2] [ref=e71]
+          - paragraph [ref=e72]: 每个可见字符计 1 字，空格与换行不计；每封最多 100 字。
+      - generic [ref=e73]:
+        - generic [ref=e74]:
+          - text: 当前轮次
+          - combobox "当前轮次" [ref=e75]:
+            - option "第1轮" [selected]
+            - option "第2轮"
+            - option "第3轮"
+            - option "第4轮"
+            - option "第5轮"
+        - generic [ref=e76]:
+          - button "＋ 新增" [ref=e77] [cursor=pointer]
+          - button "重命名" [ref=e78] [cursor=pointer]
+          - button "删除" [ref=e79] [cursor=pointer]
+        - generic [ref=e81]: 已完成 0 / 8
+      - generic [ref=e82]:
+        - group [ref=e83]:
+          - generic "◇ 沈屿 第1轮 · 北极星 待填写" [ref=e84] [cursor=pointer]:
+            - generic [ref=e85]: ◇
+            - generic [ref=e86]:
+              - generic [ref=e87]: 沈屿
+              - text: 第1轮 · 北极星
+            - generic [ref=e88]: 待填写
+          - generic [ref=e89]:
+            - textbox "沈屿的来信" [ref=e90]:
+              - /placeholder: 写下 5～100 字的心意……
+            - generic [ref=e91]:
+              - generic [ref=e92]:
+                - text: 目前 0 / 100 字
+                - text: 已保存
+              - button "清空内容" [ref=e93] [cursor=pointer]
+        - group [ref=e94]:
+          - generic "◇ 陆川 第1轮 · 微风 待填写" [ref=e95] [cursor=pointer]:
+            - generic [ref=e96]: ◇
+            - generic [ref=e97]:
+              - generic [ref=e98]: 陆川
+              - text: 第1轮 · 微风
+            - generic [ref=e99]: 待填写
+        - group [ref=e100]:
+          - generic "◇ 周野 第1轮 · 黑胶 待填写" [ref=e101] [cursor=pointer]:
+            - generic [ref=e102]: ◇
+            - generic [ref=e103]:
+              - generic [ref=e104]: 周野
+              - text: 第1轮 · 黑胶
+            - generic [ref=e105]: 待填写
+        - group [ref=e106]:
+          - generic "◇ 顾言 第1轮 · 白昼 待填写" [ref=e107] [cursor=pointer]:
+            - generic [ref=e108]: ◇
+            - generic [ref=e109]:
+              - generic [ref=e110]: 顾言
+              - text: 第1轮 · 白昼
+            - generic [ref=e111]: 待填写
+        - group [ref=e112]:
+          - generic "◇ 林夏 第1轮 · 蜜桃 待填写" [ref=e113] [cursor=pointer]:
+            - generic [ref=e114]: ◇
+            - generic [ref=e115]:
+              - generic [ref=e116]: 林夏
+              - text: 第1轮 · 蜜桃
+            - generic [ref=e117]: 待填写
+        - group [ref=e118]:
+          - generic "◇ 苏晴 第1轮 · 月光 待填写" [ref=e119] [cursor=pointer]:
+            - generic [ref=e120]: ◇
+            - generic [ref=e121]:
+              - generic [ref=e122]: 苏晴
+              - text: 第1轮 · 月光
+            - generic [ref=e123]: 待填写
+        - group [ref=e124]:
+          - generic "◇ 许栀 第1轮 · 雏菊 待填写" [ref=e125] [cursor=pointer]:
+            - generic [ref=e126]: ◇
+            - generic [ref=e127]:
+              - generic [ref=e128]: 许栀
+              - text: 第1轮 · 雏菊
+            - generic [ref=e129]: 待填写
+        - group [ref=e130]:
+          - generic "◇ 程雾 第1轮 · 蓝莓 待填写" [ref=e131] [cursor=pointer]:
+            - generic [ref=e132]: ◇
+            - generic [ref=e133]:
+              - generic [ref=e134]: 程雾
+              - text: 第1轮 · 蓝莓
+            - generic [ref=e135]: 待填写
+  - status

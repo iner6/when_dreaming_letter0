@@ -1,0 +1,74 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - img "恋爱综艺来信小卡标志" [ref=e4]
+      - generic [ref=e5]:
+        - paragraph [ref=e6]: LOVE LETTER STUDIO
+        - heading "恋爱综艺八人来信 小卡制作器" [level=1] [ref=e7]:
+          - text: 恋爱综艺八人来信
+          - text: 小卡制作器
+        - paragraph [ref=e8]: 从角色、来信到可收藏的独立小卡，一路向下完成。
+    - generic [ref=e9]:
+      - text: 第1轮
+      - text: 已保存到本机
+  - navigation "主要功能" [ref=e11]:
+    - button "01 总览" [ref=e12] [cursor=pointer]:
+      - generic [ref=e13]: "01"
+      - generic [ref=e14]: 总览
+    - button "02 角色" [ref=e15] [cursor=pointer]:
+      - generic [ref=e16]: "02"
+      - generic [ref=e17]: 角色
+    - button "03 来信" [ref=e18] [cursor=pointer]:
+      - generic [ref=e19]: "03"
+      - generic [ref=e20]: 来信
+    - button "04 预览" [ref=e21] [cursor=pointer]:
+      - generic [ref=e22]: "04"
+      - generic [ref=e23]: 预览
+    - button "05 导出" [ref=e24] [cursor=pointer]:
+      - generic [ref=e25]: "05"
+      - generic [ref=e26]: 导出
+  - main [ref=e27]:
+    - generic [ref=e28]:
+      - generic [ref=e29]:
+        - generic [ref=e30]: "01"
+        - generic [ref=e31]:
+          - paragraph [ref=e32]: PROJECT OVERVIEW
+          - heading "今天，也把心意写下来" [level=2] [ref=e33]
+          - paragraph [ref=e34]: 数据只保存在当前浏览器。先整理角色，再依轮次编辑来信。
+      - generic [ref=e35]:
+        - article [ref=e36]:
+          - generic [ref=e37]: 启用角色
+          - strong [ref=e38]: "8"
+          - text: 位嘉宾
+        - article [ref=e39]:
+          - generic [ref=e40]: 来信轮次
+          - strong [ref=e41]: "5"
+          - text: 个章节
+        - article [ref=e42]:
+          - generic [ref=e43]: 本轮进度
+          - strong [ref=e44]: 0/8
+          - text: 封完成
+      - generic [ref=e45]:
+        - generic [ref=e46]:
+          - paragraph [ref=e47]: CURRENT ROUND
+          - heading "第1轮" [level=3] [ref=e48]
+          - paragraph [ref=e49]: 还有 8 封来信等待填写
+        - button "继续编辑来信 →" [ref=e50] [cursor=pointer]
+        - text: ♡
+      - generic [ref=e51]:
+        - button "人 管理角色 姓名、立绘与代表色" [ref=e52] [cursor=pointer]:
+          - generic [ref=e53]: 人
+          - generic [ref=e54]: 管理角色
+          - generic [ref=e55]: 姓名、立绘与代表色
+        - button "卡 预览小卡 检查构图与完整文字" [ref=e56] [cursor=pointer]:
+          - generic [ref=e57]: 卡
+          - generic [ref=e58]: 预览小卡
+          - generic [ref=e59]: 检查构图与完整文字
+        - button "出 前往导出 PNG、ZIP 与项目备份" [ref=e60] [cursor=pointer]:
+          - generic [ref=e61]: 出
+          - generic [ref=e62]: 前往导出
+          - generic [ref=e63]: PNG、ZIP 与项目备份
+      - complementary [ref=e64]:
+        - text: 本机隐私说明
+        - paragraph [ref=e65]: 角色图片、来信与设置只存储在当前浏览器，不会上传到外部服务器。不同装置不会自动同步；清除网站数据可能造成资料遗失，建议定期导出项目备份。
+  - status

@@ -1,0 +1,2 @@
+[     147ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:3000/assets/logo.png:0
+[     770ms] [ERROR] Failed to load resource: the server responded with a status of 404 (File not found) @ http://localhost:3000/assets/logo.png:0

@@ -1,0 +1,100 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - img "恋爱综艺来信小卡标志" [ref=e4]
+      - generic [ref=e5]:
+        - paragraph [ref=e6]: LOVE LETTER STUDIO
+        - heading "恋爱综艺八人来信 小卡制作器" [level=1] [ref=e7]:
+          - text: 恋爱综艺八人来信
+          - text: 小卡制作器
+        - paragraph [ref=e8]: 从角色、来信到可收藏的独立小卡，一路向下完成。
+    - generic [ref=e9]:
+      - text: 第1轮
+      - text: 已保存到本机
+  - navigation "主要功能" [ref=e11]:
+    - button "01 总览" [ref=e12] [cursor=pointer]:
+      - generic [ref=e13]: "01"
+      - generic [ref=e14]: 总览
+    - button "02 角色" [ref=e15] [cursor=pointer]:
+      - generic [ref=e16]: "02"
+      - generic [ref=e17]: 角色
+    - button "03 来信" [ref=e18] [cursor=pointer]:
+      - generic [ref=e19]: "03"
+      - generic [ref=e20]: 来信
+    - button "04 预览" [active] [ref=e21] [cursor=pointer]:
+      - generic [ref=e22]: "04"
+      - generic [ref=e23]: 预览
+    - button "05 导出" [ref=e24] [cursor=pointer]:
+      - generic [ref=e25]: "05"
+      - generic [ref=e26]: 导出
+  - main [ref=e27]:
+    - text: ♡
+    - generic [ref=e138]:
+      - generic [ref=e139]:
+        - generic [ref=e140]: "04"
+        - generic [ref=e141]:
+          - paragraph [ref=e142]: CARD PREVIEW
+          - heading "预览每一份心意" [level=2] [ref=e143]
+          - paragraph [ref=e144]: 预览与 PNG 使用同一套 Canvas 绘制逻辑。
+      - generic [ref=e145]:
+        - generic [ref=e146]:
+          - text: 轮次
+          - combobox "轮次" [ref=e147]:
+            - option "第1轮" [selected]
+            - option "第2轮"
+            - option "第3轮"
+            - option "第4轮"
+            - option "第5轮"
+        - generic [ref=e148]:
+          - text: 角色
+          - combobox "角色" [ref=e149]:
+            - option "沈屿" [selected]
+            - option "陆川"
+            - option "周野"
+            - option "顾言"
+            - option "林夏"
+            - option "苏晴"
+            - option "许栀"
+            - option "程雾"
+      - generic "当前小卡预览" [ref=e151]
+      - generic [ref=e152]: 当前角色尚未上传立绘，将以留白提示区输出。
+      - generic [ref=e153]:
+        - button "下载这张 PNG" [ref=e154] [cursor=pointer]
+        - button "查看本轮全部小卡" [ref=e155] [cursor=pointer]
+      - group [ref=e156]:
+        - generic "外观设置 即时更新" [ref=e157] [cursor=pointer]:
+          - generic [ref=e158]: 外观设置
+          - generic [ref=e159]: 即时更新
+        - generic [ref=e160]:
+          - button "奶油粉色恋爱风" [ref=e161] [cursor=pointer]
+          - button "雾蓝色清新风" [ref=e162] [cursor=pointer]
+          - button "淡紫色浪漫风" [ref=e163] [cursor=pointer]
+        - generic [ref=e164]:
+          - generic [ref=e165]:
+            - text: 小卡主色
+            - textbox "小卡主色" [ref=e166]: "#e8b4bb"
+          - generic [ref=e167]:
+            - text: 信纸背景
+            - textbox "信纸背景" [ref=e168]: "#fffaf0"
+          - generic [ref=e169]:
+            - text: 文字颜色
+            - textbox "文字颜色" [ref=e170]: "#49383a"
+          - generic [ref=e171]:
+            - text: 装饰风格
+            - combobox "装饰风格" [ref=e172]:
+              - option "星光邮简"
+              - option "轻柔缎带" [selected]
+              - option "极简印章"
+          - generic [ref=e173]:
+            - text: 字体大小
+            - status "字体大小" [ref=e174]: 50px
+            - slider [ref=e175]: "50"
+          - generic [ref=e176]:
+            - text: 人物区比例
+            - status "人物区比例" [ref=e177]: 50%
+            - slider [ref=e178]: "50"
+          - generic [ref=e179]:
+            - text: 信纸区比例
+            - status "信纸区比例" [ref=e180]: 27%
+            - slider [ref=e181]: "27"
+  - status: 每封来信最多 100 个非空白字符。

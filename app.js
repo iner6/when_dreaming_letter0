@@ -2,16 +2,19 @@ const DB_NAME = 'love-letter-card-studio';
 const DB_VERSION = 1;
 const STORE = 'projects';
 const PROJECT_KEY = 'main';
+const LETTER_MIN = 5;
+const LETTER_MAX = 100;
 const $ = (s, root=document) => root.querySelector(s);
 const $$ = (s, root=document) => [...root.querySelectorAll(s)];
 
 const uid = (prefix) => `${prefix}_${crypto.randomUUID?.() || Date.now()+'_'+Math.random().toString(16).slice(2)}`;
+const legacyDefaultNames = {char_m1:'沈屿',char_m2:'陆川',char_m3:'周野',char_m4:'顾言',char_f1:'林夏',char_f2:'苏晴',char_f3:'许栀',char_f4:'程雾'};
 const initialCharacters = [
-  ['char_m1','沈屿','北极星','male','#8ea6b5'],['char_m2','陆川','微风','male','#9ba889'],
-  ['char_m3','周野','黑胶','male','#a79083'],['char_m4','顾言','白昼','male','#9d99b4'],
-  ['char_f1','林夏','蜜桃','female','#d99aa5'],['char_f2','苏晴','月光','female','#b8a2c9'],
-  ['char_f3','许栀','雏菊','female','#d1ab80'],['char_f4','程雾','蓝莓','female','#8da9bd']
-].map(([id,name,alias,gender,color])=>({id,name,alias,gender,color,enabled:true,image:null}));
+  ['char_m1','知渡','male','#8ea6b5'],['char_m2','望尋','male','#9ba889'],
+  ['char_m3','亦淮','male','#a79083'],['char_m4','承嶼','male','#9d99b4'],
+  ['char_f1','清禾','female','#d99aa5'],['char_f2','予安','female','#b8a2c9'],
+  ['char_f3','晚紓','female','#d1ab80'],['char_f4','初漾','female','#8da9bd']
+].map(([id,name,gender,color])=>({id,name,gender,color,enabled:true,image:null}));
 const initialRounds = Array.from({length:5},(_,i)=>({id:`round_${i+1}`,name:`第${i+1}轮`}));
 const presets = {
   cream:{primary:'#e8b4bb',paper:'#fffaf0',text:'#49383a',decor:'ribbon',fontSize:50,imageRatio:50,letterRatio:27},
@@ -39,10 +42,11 @@ function dbPut(value){return new Promise((resolve,reject)=>{const r=db.transacti
 function validProject(p){return p&&Array.isArray(p.characters)&&Array.isArray(p.rounds)&&p.letters&&typeof p.letters==='object'&&p.settings}
 function repairState(p){
   const base=defaultState();
-  p.characters=p.characters.filter(c=>c&&c.id).map(c=>({...c,name:String(c.name||'未命名角色'),alias:String(c.alias||''),gender:c.gender||'other',color:c.color||'#d5909f',enabled:c.enabled!==false,image:c.image||null}));
+  p.characters=p.characters.filter(c=>c&&c.id).map(c=>{const {alias,...character}=c,preset=initialCharacters.find(x=>x.id===c.id),name=legacyDefaultNames[c.id]===c.name&&preset?preset.name:String(c.name||'未命名角色');return {...character,name,gender:c.gender||'other',color:c.color||'#d5909f',enabled:c.enabled!==false,image:c.image||null}});
   p.rounds=p.rounds.filter(r=>r&&r.id).map(r=>({...r,name:String(r.name||'未命名轮次')}));
   if(!p.rounds.length)p.rounds=base.rounds;
   p.settings={...base.settings,...p.settings};
+  p.letters=Object.fromEntries(Object.entries(p.letters).map(([key,value])=>[key,truncateLetter(String(value||''))]));
   p.activeRoundId=p.rounds.some(r=>r.id===p.activeRoundId)?p.activeRoundId:p.rounds[0].id;
   p.previewRoundId=p.rounds.some(r=>r.id===p.previewRoundId)?p.previewRoundId:p.activeRoundId;
   p.previewCharacterId=p.characters.some(c=>c.id===p.previewCharacterId)?p.previewCharacterId:p.characters[0]?.id||'';
@@ -60,7 +64,8 @@ function letterKey(roundId,characterId){return `${roundId}::${characterId}`}
 function getLetter(roundId,characterId){return state.letters[letterKey(roundId,characterId)]||''}
 function setLetter(roundId,characterId,value){state.letters[letterKey(roundId,characterId)]=value;scheduleSave()}
 function countChars(text){return Array.from(String(text).replace(/[\s]/gu,'')).length}
-function truncate30(text){let n=0,out='';for(const ch of Array.from(text)){if(/\s/u.test(ch)){out+=ch;continue}if(n>=30)continue;out+=ch;n++}return out}
+function truncateLetter(text,limit=LETTER_MAX){let n=0,out='';for(const ch of Array.from(text)){if(/\s/u.test(ch)){out+=ch;continue}if(n>=limit)continue;out+=ch;n++}return out}
+function autoResizeTextarea(textarea){textarea.style.height='auto';textarea.style.height=`${Math.min(Math.max(textarea.scrollHeight,168),360)}px`;textarea.style.overflowY=textarea.scrollHeight>360?'auto':'hidden'}
 function sanitizeFileName(s){return String(s).replace(/[\\/:*?"<>|\x00-\x1F]/g,'_').replace(/[. ]+$/g,'').trim()||'未命名角色'}
 function roundFileName(round){const m=round.name.match(/第\s*(\d+)\s*轮/);return m?`第${m[1]}轮`:sanitizeFileName(round.name)}
 function showToast(msg,error=false){const t=$('#toast');t.textContent=msg;t.style.background=error?'#873f46':'#3e3536';t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3300)}
@@ -97,15 +102,16 @@ function renderCharacters(){
   $('#characterCountText').textContent=`${state.characters.length} 位角色 · ${enabledCharacters().length} 位启用`;
   $('#characterList').innerHTML=state.characters.map(c=>`<article class="character-card ${c.enabled?'':'disabled'}" data-id="${c.id}">
     <div class="portrait-thumb">${c.image?`<img src="${c.image}" alt="${escapeHTML(c.name)}立绘">`:'<span class="portrait-placeholder">◇</span>'}</div>
-    <div class="character-info"><span class="character-meta"><i class="color-chip" style="background:${c.color}"></i>${genderLabel(c.gender)} · ${escapeHTML(c.alias||'未设代号')}</span><h3>${escapeHTML(c.name)}</h3>
+    <div class="character-info"><span class="character-meta"><i class="color-chip" style="background:${c.color}"></i>${genderLabel(c.gender)}</span><h3>${escapeHTML(c.name)}</h3>
       <div class="character-actions"><button class="edit-role">编辑资料</button><button class="upload-role">${c.image?'更换':'上传'}立绘</button>${c.image?'<button class="remove-image">移除立绘</button>':''}<button class="delete-role">删除</button></div>
     </div><button class="enable-pill">${c.enabled?'已启用':'已停用'}</button></article>`).join('')||'<div class="empty-mini">尚无角色，请新增角色。</div>';
 }
 function renderLetterEditors(){
   const r=getRound(state.activeRoundId),chars=enabledCharacters();
   $('#letterEditors').innerHTML=chars.map((c,i)=>{const val=getLetter(r.id,c.id),n=countChars(val);return `<details class="letter-editor" data-id="${c.id}" ${i===0?'open':''}><summary>
-    <span class="editor-avatar">${c.image?`<img src="${c.image}" alt="">`:'◇'}</span><span class="editor-title"><b>${escapeHTML(c.name)}</b><small>${escapeHTML(r.name)} · ${escapeHTML(c.alias||genderLabel(c.gender))}</small></span><span class="letter-state ${n?'done':''}">${n?'已填写':'待填写'}</span>
-    </summary><div class="editor-body"><textarea class="letter-textarea" placeholder="写下 5～30 字的心意……" aria-label="${escapeHTML(c.name)}的来信">${escapeHTML(val)}</textarea><div class="editor-foot"><span><b class="count-text ${n&&n<5?'short':''} ${n===30?'full':''}">目前 ${n} / 30 字${n&&n<5?' · 可暂存，导出前会提醒':''}</b><br><small class="save-state">已保存</small></span><button class="clear-letter">清空内容</button></div></div></details>`}).join('')||'<div class="empty-mini">没有启用的角色，请先到角色管理启用角色。</div>';
+    <span class="editor-avatar">${c.image?`<img src="${c.image}" alt="">`:'◇'}</span><span class="editor-title"><b>${escapeHTML(c.name)}</b><small>${escapeHTML(r.name)} · ${genderLabel(c.gender)}</small></span><span class="letter-state ${n?'done':''}">${n?'已填写':'待填写'}</span>
+    </summary><div class="editor-body"><textarea class="letter-textarea" placeholder="写下 5～100 字的心意……" aria-label="${escapeHTML(c.name)}的来信">${escapeHTML(val)}</textarea><div class="editor-foot"><span><b class="count-text ${n&&n<LETTER_MIN?'short':''} ${n>=LETTER_MAX?'full':''}">目前 ${n} / ${LETTER_MAX} 字${n&&n<LETTER_MIN?' · 可暂存，导出前会提醒':''}</b><br><small class="save-state">已保存</small></span><button class="clear-letter">清空内容</button></div></div></details>`}).join('')||'<div class="empty-mini">没有启用的角色，请先到角色管理启用角色。</div>';
+  requestAnimationFrame(()=>$$('.letter-textarea',$('#letterEditors')).forEach(autoResizeTextarea));
   updateRoundProgress();
 }
 function updateRoundProgress(){
@@ -119,7 +125,7 @@ function renderSettings(){const s=state.settings;$('#settingPrimary').value=s.pr
 function renderAll(){renderRoundOptions();renderOverview();renderCharacters();renderLetterEditors();renderCharacterSelect();renderSettings();updateExportUI()}
 
 function openCharacterDialog(c=null){
-  $('#characterDialogTitle').textContent=c?'编辑角色':'新增角色';$('#characterId').value=c?.id||'';$('#characterName').value=c?.name||'';$('#characterAlias').value=c?.alias||'';$('#characterGender').value=c?.gender||'male';$('#characterColor').value=c?.color||'#d5909f';$('#characterEnabled').checked=c?.enabled!==false;$('#characterDialog').showModal();
+  $('#characterDialogTitle').textContent=c?'编辑角色':'新增角色';$('#characterId').value=c?.id||'';$('#characterName').value=c?.name||'';$('#characterGender').value=c?.gender||'male';$('#characterColor').value=c?.color||'#d5909f';$('#characterEnabled').checked=c?.enabled!==false;$('#characterDialog').showModal();
 }
 async function deleteCharacter(id){
   const c=getCharacter(id);const has=Object.keys(state.letters).some(k=>k.endsWith(`::${id}`)&&countChars(state.letters[k]));
@@ -157,19 +163,18 @@ async function renderCard(canvas,round,character,letter,settings=state.settings)
     ctx.fillStyle=hexAlpha(s.primary,.12);roundedRect(ctx,96,imgY+18,1008,imgH-36,20);ctx.fill();ctx.fillStyle=hexAlpha(s.text,.46);ctx.font='30px "Noto Serif SC",serif';ctx.textAlign='center';ctx.fillText('尚未上传角色立绘',600,imgY+imgH/2);
   }
   ctx.fillStyle=s.text;ctx.font='600 47px "Noto Serif SC",serif';ctx.textAlign='center';ctx.textBaseline='alphabetic';ctx.fillText(character?.name||'未选择角色',600,nameY);
-  const alias=character?.alias?`— ${character.alias} —`:'— HEART SIGNAL —';ctx.fillStyle=hexAlpha(s.text,.58);ctx.font='16px Georgia,serif';ctx.fillText(alias,600,nameY+29);
   ctx.save();ctx.shadowColor='rgba(64,43,40,.13)';ctx.shadowBlur=24;ctx.shadowOffsetY=12;ctx.fillStyle=s.paper;roundedRect(ctx,105,paperY,990,letterH,24);ctx.fill();ctx.restore();
   ctx.strokeStyle=hexAlpha(s.primary,.43);ctx.lineWidth=2;roundedRect(ctx,105,paperY,990,letterH,24);ctx.stroke();
   ctx.fillStyle=s.primary;ctx.beginPath();ctx.arc(145,paperY+41,7,0,Math.PI*2);ctx.fill();ctx.fillStyle=hexAlpha(s.text,.45);ctx.font='15px Georgia';ctx.textAlign='left';ctx.fillText('DEAR,',165,paperY+47);
   if(s.decor==='stars'){ctx.fillStyle=hexAlpha(s.primary,.75);ctx.font='28px serif';ctx.fillText('✦',1024,paperY+48);ctx.fillText('·',1055,paperY+49)}
   else if(s.decor==='ribbon'){ctx.strokeStyle=hexAlpha(s.primary,.75);ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(975,paperY+32);ctx.bezierCurveTo(1010,paperY+12,1040,paperY+70,1070,paperY+35);ctx.stroke()}
   else{ctx.strokeStyle=hexAlpha(s.primary,.7);ctx.lineWidth=2;ctx.strokeRect(1010,paperY+22,55,42)}
-  const clean=String(letter||'').trim();let fontSize=Number(s.fontSize),lines=[];const maxTextWidth=830,maxLines=Math.max(2,Math.floor((letterH-140)/(fontSize*1.55)));
-  do{ctx.font=`600 ${fontSize}px "Noto Serif SC","Songti SC",serif`;lines=splitLines(ctx,clean||'这封来信还没有内容',maxTextWidth);if(lines.length<=maxLines)break;fontSize-=2}while(fontSize>=34);
-  const lineHeight=fontSize*1.55,totalH=lines.length*lineHeight,centerY=paperY+letterH/2+24;ctx.fillStyle=clean?s.text:hexAlpha(s.text,.35);ctx.textAlign='center';ctx.textBaseline='middle';
+  const clean=String(letter||'').trim(),maxTextWidth=830,minFontSize=24,textTop=paperY+76,textBottom=paperY+letterH-42,availableTextHeight=Math.max(100,textBottom-textTop);let fontSize=Number(s.fontSize),lines=[],lineHeight=0,totalH=0;
+  do{ctx.font=`600 ${fontSize}px "Noto Serif SC","Songti SC",serif`;lines=splitLines(ctx,clean||'这封来信还没有内容',maxTextWidth);lineHeight=fontSize*1.45;totalH=lines.length*lineHeight;if(totalH<=availableTextHeight)break;fontSize--}while(fontSize>minFontSize);
+  const centerY=(textTop+textBottom)/2;ctx.fillStyle=clean?s.text:hexAlpha(s.text,.35);ctx.textAlign='center';ctx.textBaseline='middle';
   lines.forEach((line,i)=>ctx.fillText(line,600,centerY-totalH/2+lineHeight*(i+.5)));
   ctx.fillStyle=hexAlpha(s.text,.52);ctx.font='14px Georgia';ctx.textAlign='center';ctx.fillText('THE MOMENT WE MET · LOVE LETTER ARCHIVE',600,1525);
-  const overflow=lines.length>maxLines||fontSize<34;return {overflow,fontSize,lines:lines.length,missingImage:!portrait};
+  const overflow=totalH>availableTextHeight;return {overflow,fontSize,lines:lines.length,missingImage:!portrait};
 }
 async function renderPreview(){
   const round=getRound(state.previewRoundId),character=getCharacter(state.previewCharacterId);if(!round||!character)return;
@@ -181,7 +186,7 @@ async function renderPreview(){
 function canvasBlob(canvas){return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('浏览器无法生成 PNG 图片。')),'image/png'))}
 function downloadBlob(blob,name){const a=document.createElement('a');const url=URL.createObjectURL(blob);a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
 async function downloadCurrent(){
-  if(exporting)return;const round=getRound(state.previewRoundId),character=getCharacter(state.previewCharacterId);if(!round||!character)return showToast('请先选择轮次与角色。',true);const text=getLetter(round.id,character.id);if(!countChars(text))return showToast('当前来信为空白，请先填写内容。',true);if(countChars(text)<5&&!await confirmAction('来信少于 5 字',`“${character.name}”的来信只有 ${countChars(text)} 字，仍要导出吗？`,'继续导出'))return;
+  if(exporting)return;const round=getRound(state.previewRoundId),character=getCharacter(state.previewCharacterId);if(!round||!character)return showToast('请先选择轮次与角色。',true);const text=getLetter(round.id,character.id);if(!countChars(text))return showToast('当前来信为空白，请先填写内容。',true);if(countChars(text)<LETTER_MIN&&!await confirmAction(`来信少于 ${LETTER_MIN} 字`,`“${character.name}”的来信只有 ${countChars(text)} 字，仍要导出吗？`,'继续导出'))return;
   try{exporting=true;await document.fonts?.ready;const canvas=document.createElement('canvas');const result=await renderCard(canvas,round,character,text);if(result.overflow)throw new Error('文字排版空间不足，请调整字体或信纸区比例。');downloadBlob(await canvasBlob(canvas),`${roundFileName(round)}_${sanitizeFileName(character.name)}.png`);showToast('PNG 已生成并开始下载');}
   catch(e){showToast(`导出失败：${e.message}`,true)}finally{exporting=false}
 }
@@ -209,7 +214,7 @@ async function makeZip(files){
   const centralBlock=concatBytes(centrals),end=concatBytes([u32(0x06054b50),u16(0),u16(0),u16(files.length),u16(files.length),u32(centralBlock.length),u32(offset),u16(0)]);return new Blob([...locals,centralBlock,end],{type:'application/zip'})
 }
 async function batchExport(){
-  if(exporting)return;const items=exportItems();if(!items.length)return showToast('没有可导出的非空白来信。',true);const short=items.filter(x=>countChars(x.text)<5);if(short.length&&!await confirmAction('发现短来信',`有 ${short.length} 封来信少于 5 字。仍要继续批量导出吗？`,'继续导出'))return;
+  if(exporting)return;const items=exportItems();if(!items.length)return showToast('没有可导出的非空白来信。',true);const short=items.filter(x=>countChars(x.text)<LETTER_MIN);if(short.length&&!await confirmAction('发现短来信',`有 ${short.length} 封来信少于 ${LETTER_MIN} 字。仍要继续批量导出吗？`,'继续导出'))return;
   const progress=$('#exportProgress');progress.classList.remove('hidden');$('#exportProgressBar').style.width='0%';const files=[],failures=[];exporting=true;$('#batchExportBtn').disabled=true;
   try{await document.fonts?.ready;for(let i=0;i<items.length;i++){const item=items[i];$('#exportProgressText').textContent=`正在产生小卡：${i+1} / ${items.length}`;$('#exportProgressCount').textContent=`${i} / ${items.length}`;try{const canvas=document.createElement('canvas');const layout=await renderCard(canvas,item.round,item.character,item.text);if(layout.overflow)throw new Error('文字无法容纳');files.push({name:`${roundFileName(item.round)}_${sanitizeFileName(item.character.name)}.png`,blob:await canvasBlob(canvas)})}catch(e){failures.push(`${item.round.name}／${item.character.name}：${e.message}`)}$('#exportProgressCount').textContent=`${i+1} / ${items.length}`;$('#exportProgressBar').style.width=`${(i+1)/items.length*100}%`;await new Promise(r=>setTimeout(r,25))}
     if(!files.length)throw new Error('所有小卡均生成失败。');$('#exportProgressText').textContent='正在封装 ZIP…';downloadBlob(await makeZip(files),'恋爱综艺来信小卡.zip');if(failures.length)showToast(`已导出 ${files.length} 张，${failures.length} 张失败：${failures.join('；')}`,true);else showToast(`已成功生成 ${files.length} 张小卡`);$('#exportProgressText').textContent=failures.length?'导出完成，部分失败':'导出成功';
@@ -228,18 +233,19 @@ async function previewBackup(file){
 
 function bindEvents(){
   $$('.nav-btn').forEach(b=>b.onclick=()=>goPage(b.dataset.page));$$('[data-go]').forEach(b=>b.onclick=()=>goPage(b.dataset.go));
+  $('#letterEditors').addEventListener('toggle',e=>{if(e.target.matches('.letter-editor[open]'))requestAnimationFrame(()=>autoResizeTextarea($('.letter-textarea',e.target)))},true);
   $('#letterRoundSelect').onchange=e=>{state.activeRoundId=e.target.value;renderLetterEditors();renderOverview();scheduleSave()};
   $('#previewRoundSelect').onchange=e=>{state.previewRoundId=e.target.value;renderPreview();scheduleSave()};
   $('#previewCharacterSelect').onchange=e=>{state.previewCharacterId=e.target.value;renderPreview();scheduleSave()};
   $('#addRoundBtn').onclick=async()=>{const name=prompt('请输入新轮次名称：',`第${state.rounds.length+1}轮`);if(!name?.trim())return;const r={id:uid('round'),name:name.trim().slice(0,30)};state.rounds.push(r);state.activeRoundId=r.id;state.previewRoundId=r.id;renderAll();scheduleSave();showToast('已新增空白轮次')};
   $('#renameRoundBtn').onclick=()=>{const r=getRound(state.activeRoundId),name=prompt('修改轮次名称：',r.name);if(!name?.trim())return;r.name=name.trim().slice(0,30);renderAll();renderPreview();scheduleSave()};
   $('#deleteRoundBtn').onclick=async()=>{if(state.rounds.length<=1)return showToast('至少需要保留一个轮次。',true);const r=getRound(state.activeRoundId),has=state.characters.some(c=>countChars(getLetter(r.id,c.id)));if(!await confirmAction('删除轮次？',`${r.name}${has?'包含已填写来信，删除后无法恢复。':'目前没有来信。'} 确定删除吗？`,'删除轮次'))return;state.rounds=state.rounds.filter(x=>x.id!==r.id);Object.keys(state.letters).forEach(k=>{if(k.startsWith(`${r.id}::`))delete state.letters[k]});state.activeRoundId=state.rounds[0].id;if(state.previewRoundId===r.id)state.previewRoundId=state.activeRoundId;renderAll();renderPreview();scheduleSave()};
-  $('#letterEditors').addEventListener('input',e=>{if(!e.target.classList.contains('letter-textarea'))return;const details=e.target.closest('.letter-editor'),id=details.dataset.id,clean=truncate30(e.target.value);if(clean!==e.target.value){const pos=e.target.selectionStart;e.target.value=clean;e.target.setSelectionRange(Math.min(pos,clean.length),Math.min(pos,clean.length));showToast('每封来信最多 30 个非空白字符。')};setLetter(state.activeRoundId,id,e.target.value);const n=countChars(e.target.value),ct=$('.count-text',details),badge=$('.letter-state',details);ct.textContent=`目前 ${n} / 30 字${n&&n<5?' · 可暂存，导出前会提醒':''}`;ct.className=`count-text ${n&&n<5?'short':''} ${n===30?'full':''}`;badge.textContent=n?'已填写':'待填写';badge.classList.toggle('done',!!n);updateRoundProgress()});
+  $('#letterEditors').addEventListener('input',e=>{if(!e.target.classList.contains('letter-textarea'))return;const details=e.target.closest('.letter-editor'),id=details.dataset.id,clean=truncateLetter(e.target.value);if(clean!==e.target.value){const pos=e.target.selectionStart;e.target.value=clean;e.target.setSelectionRange(Math.min(pos,clean.length),Math.min(pos,clean.length));showToast(`每封来信最多 ${LETTER_MAX} 个非空白字符。`)};autoResizeTextarea(e.target);setLetter(state.activeRoundId,id,e.target.value);const n=countChars(e.target.value),ct=$('.count-text',details),badge=$('.letter-state',details);ct.textContent=`目前 ${n} / ${LETTER_MAX} 字${n&&n<LETTER_MIN?' · 可暂存，导出前会提醒':''}`;ct.className=`count-text ${n&&n<LETTER_MIN?'short':''} ${n>=LETTER_MAX?'full':''}`;badge.textContent=n?'已填写':'待填写';badge.classList.toggle('done',!!n);updateRoundProgress()});
   $('#letterEditors').addEventListener('click',async e=>{if(!e.target.classList.contains('clear-letter'))return;const d=e.target.closest('.letter-editor'),t=$('.letter-textarea',d);if(t.value&&!await confirmAction('清空来信？','这封来信的内容会被清空。','清空'))return;t.value='';t.dispatchEvent(new Event('input',{bubbles:true}))});
   $('#addCharacterBtn').onclick=()=>openCharacterDialog();
   $('#characterList').onclick=async e=>{const card=e.target.closest('.character-card');if(!card)return;const c=getCharacter(card.dataset.id);if(e.target.classList.contains('edit-role'))openCharacterDialog(c);else if(e.target.classList.contains('upload-role')){pendingImageCharacter=c.id;$('#hiddenImageInput').click()}else if(e.target.classList.contains('remove-image')){if(await confirmAction('移除立绘？','角色资料与来信会保留，只移除图片。','移除')){c.image=null;imageCache.clear();renderAll();renderPreview();scheduleSave()}}else if(e.target.classList.contains('enable-pill')){c.enabled=!c.enabled;renderAll();renderPreview();scheduleSave()}else if(e.target.classList.contains('delete-role'))deleteCharacter(c.id)};
   $('#hiddenImageInput').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file||!pendingImageCharacter)return;try{const data=await readImageFile(file),c=getCharacter(pendingImageCharacter);if(!c)throw new Error('目标角色已不存在。');c.image=data;imageCache.clear();renderAll();await renderPreview();scheduleSave();showToast('立绘已保存到当前浏览器')}catch(err){showToast(err.message,true)}finally{pendingImageCharacter=null}};
-  $('#characterForm').addEventListener('submit',e=>{e.preventDefault();const id=$('#characterId').value,name=$('#characterName').value.trim();if(!name)return showToast('角色名称不能为空。',true);const data={name:name.slice(0,20),alias:$('#characterAlias').value.trim().slice(0,20),gender:$('#characterGender').value,color:$('#characterColor').value,enabled:$('#characterEnabled').checked};if(id)Object.assign(getCharacter(id),data);else state.characters.push({id:uid('char'),...data,image:null});$('#characterDialog').close();renderAll();renderPreview();scheduleSave();showToast(id?'角色资料已更新':'角色已新增')});
+  $('#characterForm').addEventListener('submit',e=>{e.preventDefault();const id=$('#characterId').value,name=$('#characterName').value.trim();if(!name)return showToast('角色名称不能为空。',true);const data={name:name.slice(0,20),gender:$('#characterGender').value,color:$('#characterColor').value,enabled:$('#characterEnabled').checked};if(id)Object.assign(getCharacter(id),data);else state.characters.push({id:uid('char'),...data,image:null});$('#characterDialog').close();renderAll();renderPreview();scheduleSave();showToast(id?'角色资料已更新':'角色已新增')});
   $('#downloadCurrentBtn').onclick=downloadCurrent;$('#downloadCurrentBtn2').onclick=downloadCurrent;
   $('#showAllBtn').onclick=async()=>{$('#allCardsSection').classList.remove('hidden');$('#showAllBtn').disabled=true;try{await renderAllCards();$('#allCardsSection').scrollIntoView({behavior:'smooth'})}finally{$('#showAllBtn').disabled=false}};$('#hideAllBtn').onclick=()=>$('#allCardsSection').classList.add('hidden');
   $$('.preset').forEach(b=>b.onclick=()=>{state.settings={...presets[b.dataset.preset],preset:b.dataset.preset};renderSettings();renderPreview();scheduleSave()});
