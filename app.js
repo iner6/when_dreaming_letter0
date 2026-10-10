@@ -141,6 +141,7 @@ function loadImage(src){
   const p=new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=()=>reject(new Error('图片载入失败'));im.src=src});imageCache.set(src,p);return p;
 }
 function drawContain(ctx,img,x,y,w,h,pad=0){if(!img)return;const scale=Math.min((w-pad*2)/img.naturalWidth,(h-pad*2)/img.naturalHeight);const dw=img.naturalWidth*scale,dh=img.naturalHeight*scale;ctx.drawImage(img,x+(w-dw)/2,y+(h-dh)/2,dw,dh)}
+function drawCover(ctx,img,x,y,w,h){if(!img)return;const scale=Math.max(w/img.naturalWidth,h/img.naturalHeight),sw=w/scale,sh=h/scale,sx=(img.naturalWidth-sw)/2,sy=(img.naturalHeight-sh)/2;ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h)}
 function splitLines(ctx,text,maxWidth){
   const result=[];let line='';for(const ch of Array.from(text.replace(/\n+/g,' '))){const test=line+ch;if(ctx.measureText(test).width>maxWidth&&line){result.push(line.trimEnd());line=ch.trimStart()}else line=test}if(line||!result.length)result.push(line.trimEnd());return result;
 }
@@ -151,21 +152,26 @@ async function renderJourneyCard(canvas,character,settings=state.settings){
   const s=settings,entries=journeyEntries(character),fontSize=Number(s.fontSize),lineHeight=Math.round(fontSize*1.55),maxTextWidth=830;
   canvas.width=1200;canvas.height=100;let ctx=canvas.getContext('2d');ctx.font=`600 ${fontSize}px "Noto Serif SC","Songti SC",serif`;
   const sections=entries.map(item=>{const lines=splitLines(ctx,item.text,maxTextWidth);return {...item,lines,height:150+lines.length*lineHeight}});
-  const headerH=690,footerH=170,emptyH=330,gap=34;
+  const heroH=1500,headerH=1610,footerH=190,emptyH=330,gap=34;
   const contentH=sections.length?sections.reduce((n,x)=>n+x.height,0)+gap*Math.max(0,sections.length-1):emptyH;
-  const totalH=Math.max(1320,headerH+contentH+footerH);
+  const totalH=headerH+contentH+footerH;
   canvas.width=1200;canvas.height=totalH;ctx=canvas.getContext('2d');
   ctx.fillStyle='#f7f1e8';ctx.fillRect(0,0,1200,totalH);
-  const glow=ctx.createRadialGradient(950,180,30,950,180,820);glow.addColorStop(0,hexAlpha(s.primary,.48));glow.addColorStop(1,hexAlpha(s.primary,0));ctx.fillStyle=glow;ctx.fillRect(0,0,1200,980);
-  for(let y=85;y<totalH-60;y+=18){ctx.fillStyle=`rgba(100,78,72,${y%36?'.017':'.01'})`;ctx.fillRect(70,y,1060,1)}
-  ctx.strokeStyle=hexAlpha(s.primary,.52);ctx.lineWidth=3;roundedRect(ctx,44,44,1112,totalH-88,32);ctx.stroke();ctx.strokeStyle='rgba(255,255,255,.72)';ctx.lineWidth=2;roundedRect(ctx,56,56,1088,totalH-112,26);ctx.stroke();
-  let portrait=null;try{portrait=await loadImage(character?.image)}catch(e){console.warn(e)}
-  ctx.fillStyle=hexAlpha(s.text,.78);ctx.font='18px Georgia';ctx.textAlign='left';ctx.fillText('LOVE LETTER · COMPLETE JOURNEY',82,105);
-  ctx.save();ctx.translate(1040,112);ctx.rotate(.06);ctx.strokeStyle=hexAlpha(s.primary,.9);ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,59,0,Math.PI*2);ctx.stroke();ctx.font='bold 18px Georgia';ctx.textAlign='center';ctx.fillStyle=hexAlpha(s.text,.72);ctx.fillText('ALL',0,-7);ctx.font='14px Georgia';ctx.fillText('STAGES',0,17);ctx.restore();
-  ctx.fillStyle='rgba(255,255,255,.43)';roundedRect(ctx,76,150,1048,370,30);ctx.fill();ctx.strokeStyle=hexAlpha(s.primary,.3);ctx.lineWidth=2;roundedRect(ctx,76,150,1048,370,30);ctx.stroke();
-  if(portrait)drawContain(ctx,portrait,96,168,1008,334);else{ctx.fillStyle=hexAlpha(s.primary,.12);roundedRect(ctx,96,168,1008,334,22);ctx.fill();ctx.fillStyle=hexAlpha(s.text,.42);ctx.font='28px "Noto Serif SC",serif';ctx.textAlign='center';ctx.fillText('尚未上传角色立绘',600,345)}
-  ctx.fillStyle=s.text;ctx.font='600 58px "Noto Serif SC",serif';ctx.textAlign='center';ctx.fillText(character?.name||'未选择角色',600,590);
-  ctx.fillStyle=hexAlpha(s.text,.55);ctx.font='17px Georgia';ctx.fillText(`${sections.length} / ${state.rounds.length} STAGES ARCHIVED`,600,628);
+  let logo=null,portrait=null;try{[logo,portrait]=await Promise.all([loadImage('assets/logo.png'),loadImage(character?.image)])}catch(e){console.warn(e)}
+  ctx.save();ctx.beginPath();ctx.rect(0,0,1200,heroH);ctx.clip();
+  const heroGlow=ctx.createLinearGradient(0,0,1200,heroH);heroGlow.addColorStop(0,hexAlpha(s.primary,.72));heroGlow.addColorStop(.55,'#f5ece8');heroGlow.addColorStop(1,hexAlpha(s.primary,.38));ctx.fillStyle=heroGlow;ctx.fillRect(0,0,1200,heroH);
+  if(portrait){ctx.save();ctx.globalAlpha=.42;ctx.filter='blur(34px) saturate(.75)';drawCover(ctx,portrait,-50,-50,1300,1600);ctx.restore();ctx.fillStyle='rgba(255,250,246,.25)';ctx.fillRect(0,0,1200,heroH);drawContain(ctx,portrait,0,0,1200,heroH)}
+  else{ctx.fillStyle=hexAlpha(s.primary,.16);ctx.fillRect(0,0,1200,heroH);ctx.fillStyle=hexAlpha(s.text,.43);ctx.font='32px "Noto Serif SC",serif';ctx.textAlign='center';ctx.fillText('尚未上传直式人物立绘',600,720)}
+  const shade=ctx.createLinearGradient(0,700,0,heroH);shade.addColorStop(0,'rgba(35,24,25,0)');shade.addColorStop(.72,'rgba(35,24,25,.28)');shade.addColorStop(1,'rgba(35,24,25,.78)');ctx.fillStyle=shade;ctx.fillRect(0,650,1200,850);
+  ctx.fillStyle='rgba(255,255,255,.86)';ctx.font='16px Georgia';ctx.textAlign='left';ctx.fillText('LOVE LETTER · COMPLETE JOURNEY',70,88);
+  if(logo)drawContain(ctx,logo,720,34,430,242);
+  ctx.fillStyle='#fff';ctx.shadowColor='rgba(24,15,16,.28)';ctx.shadowBlur=18;ctx.font='600 76px "Noto Serif SC",serif';ctx.textAlign='center';ctx.fillText(character?.name||'未选择角色',600,1350);ctx.shadowBlur=0;
+  ctx.fillStyle='rgba(255,255,255,.78)';ctx.font='18px Georgia';ctx.fillText(`${sections.length} / ${state.rounds.length} STAGES ARCHIVED`,600,1404);
+  ctx.strokeStyle='rgba(255,255,255,.62)';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(500,1445);ctx.lineTo(700,1445);ctx.stroke();ctx.restore();
+  ctx.fillStyle='#f7f1e8';ctx.fillRect(0,heroH,1200,totalH-heroH);
+  const glow=ctx.createRadialGradient(1050,heroH+100,20,1050,heroH+100,680);glow.addColorStop(0,hexAlpha(s.primary,.32));glow.addColorStop(1,hexAlpha(s.primary,0));ctx.fillStyle=glow;ctx.fillRect(0,heroH,1200,720);
+  for(let lineY=heroH+28;lineY<totalH-60;lineY+=18){ctx.fillStyle='rgba(100,78,72,.016)';ctx.fillRect(70,lineY,1060,1)}
+  ctx.fillStyle=hexAlpha(s.text,.52);ctx.font='15px Georgia';ctx.textAlign='center';ctx.fillText('ALL LETTERS · IN CHRONOLOGICAL ORDER',600,heroH+63);
   let y=headerH;
   if(!sections.length){ctx.fillStyle=s.paper;roundedRect(ctx,105,y,990,emptyH-24,28);ctx.fill();ctx.strokeStyle=hexAlpha(s.primary,.38);ctx.lineWidth=2;ctx.stroke();ctx.fillStyle=hexAlpha(s.text,.38);ctx.font='30px "Noto Serif SC",serif';ctx.textAlign='center';ctx.fillText('还没有已填写的阶段来信',600,y+145)}
   sections.forEach((section,index)=>{
